@@ -1,8 +1,12 @@
 package edu.cmu.lti.f13.hw4.hw4_chenyinh.annotators;
 
 import java.awt.List;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Scanner;
@@ -22,6 +26,7 @@ import org.apache.uima.jcas.cas.NonEmptyFSList;
 import org.apache.uima.jcas.cas.StringArray;
 import org.apache.uima.jcas.tcas.Annotation;
 
+import edu.cmu.lti.f13.hw4.hw4_chenyinh.VectorSpaceRetrieval;
 import edu.cmu.lti.f13.hw4.hw4_chenyinh.typesystems.Document;
 import edu.cmu.lti.f13.hw4.hw4_chenyinh.typesystems.Token;
 import edu.cmu.lti.f13.hw4.hw4_chenyinh.utils.Utils;
@@ -42,6 +47,9 @@ public class DocumentVectorAnnotator extends JCasAnnotator_ImplBase {
       } catch (FileNotFoundException e) {
         // TODO Auto-generated catch block
         e.printStackTrace();
+      } catch (IOException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
       }
     }
 
@@ -51,10 +59,10 @@ public class DocumentVectorAnnotator extends JCasAnnotator_ImplBase {
    * 
    * @param jcas
    * @param doc
-   * @throws FileNotFoundException
+   * @throws IOException 
    */
 
-  private void createTermFreqVector(JCas jcas, Document doc) throws FileNotFoundException {
+  private void createTermFreqVector(JCas jcas, Document doc) throws IOException {
 
     String docText = doc.getText();
     /* using regex expression to find tokens */
@@ -77,15 +85,20 @@ public class DocumentVectorAnnotator extends JCasAnnotator_ImplBase {
     }
 
     /* generate the stopwords hashlist in order to remove useless information in the document */
-    Scanner scan = new Scanner(new File("src/main/resources/stopwords.txt"));
+    URL sturl = DocumentVectorAnnotator.class.getResource("/stopwords.txt");
+    
+    BufferedReader reader = new BufferedReader(new InputStreamReader(sturl.openStream()));
+   // Scanner scan = new Scanner(getClass().getClassLoader().getResourceAsStream("src/main/resources/stopwords.txt" ));
     HashMap<String, Integer> stopList = new HashMap<String, Integer>();
-    String originLine = null;
-    do {
-      originLine = scan.nextLine().trim();
+    String originLine = reader.readLine();
+    while(originLine != null)
+    {  
+      //originLine = scan.nextLine().trim();
       if (!originLine.startsWith("#")) {
         stopList.put(originLine, 1);
       }
-    } while (scan.hasNext());
+      originLine = reader.readLine();
+    } 
 
     /* construct a vector of tokens and update the tokenList in CAS */
     for (Entry<String, Integer> entry : tftable.entrySet()) {
